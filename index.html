@@ -12,7 +12,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23EFE6D6'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='serif' font-size='32' font-weight='900' fill='%232B1810'%3EAI%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;500;600;700;900&family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --paper:      #EFE6D6;
@@ -850,6 +850,1764 @@
   }, { rootMargin: '0px 0px -10% 0px', threshold: 0.05 });
 
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     PRESENTATION DECK · 上課簡報
+     ══════════════════════════════════════════════════════════════════ -->
+<style>
+  /* ───── deck entry card (visible in page flow) ───── */
+  .deck-entry {
+    padding: clamp(64px, 10vw, 120px) 0;
+    border-top: 1px solid var(--ink);
+    background: var(--paper-hi);
+  }
+  .deck-entry .entry-card {
+    max-width: 760px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .deck-entry .eyebrow-lg { margin-bottom: 12px; }
+  .deck-entry h2 {
+    font-family: var(--serif);
+    font-weight: 900;
+    font-size: clamp(36px, 5vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -1.5px;
+    margin: 0 0 16px;
+  }
+  .deck-entry h2 em {
+    font-style: italic; font-weight: 400; color: var(--accent);
+  }
+  .deck-entry p.lead {
+    font-family: var(--serif); font-style: italic;
+    font-size: 18px; color: var(--warm-sub);
+    margin: 0 0 28px;
+  }
+  .deck-start-btn {
+    display: inline-flex; align-items: center; gap: 14px;
+    padding: 18px 40px;
+    background: var(--ink);
+    color: var(--paper-hi);
+    font-family: var(--sans);
+    font-size: 15px; font-weight: 700; letter-spacing: 4px;
+    border: 2px solid var(--ink);
+    cursor: pointer;
+    transition: all 220ms ease;
+  }
+  .deck-start-btn:hover {
+    background: var(--accent); border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(198,93,32,0.25);
+  }
+  .deck-hint {
+    font-family: var(--sans);
+    font-size: 11px; letter-spacing: 3px; font-weight: 600;
+    color: var(--warm-mute);
+    margin-top: 20px;
+  }
+  .deck-hint kbd {
+    display: inline-block;
+    padding: 1px 7px;
+    border: 1px solid var(--warm-mute);
+    border-radius: 3px;
+    background: var(--paper);
+    font-family: var(--sans);
+    font-size: 10px; font-weight: 700;
+    margin: 0 2px;
+  }
+
+  /* ───── deck overlay ───── */
+  .deck {
+    display: none;
+  }
+  .deck.is-on {
+    display: flex; flex-direction: column;
+    position: fixed; inset: 0;
+    z-index: 9999;
+    background: var(--paper);
+    overflow: hidden;
+  }
+  body.deck-active { overflow: hidden; }
+
+  .deck-header {
+    flex: 0 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px clamp(20px, 3vw, 40px);
+    border-bottom: 1px solid var(--ink);
+    font-family: var(--sans);
+    font-size: 11px; letter-spacing: 3px; font-weight: 600;
+    text-transform: uppercase;
+    background: var(--paper-hi);
+  }
+  .deck-header .head-l { letter-spacing: 2px; }
+  .deck-header .head-c { letter-spacing: 4px; font-weight: 700; color: var(--accent-dp); }
+  .deck-header .head-r { display: flex; align-items: center; gap: 16px; }
+  .deck-counter { font-family: var(--serif); font-weight: 700; font-size: 13px; letter-spacing: 1px; }
+  .deck-exit {
+    background: none; border: none; cursor: pointer;
+    font-size: 24px; line-height: 1;
+    color: var(--ink); padding: 4px 8px;
+  }
+  .deck-exit:hover { color: var(--accent); }
+
+  .deck-progress-bar {
+    height: 3px; width: 100%;
+    background: var(--rule-soft);
+    position: relative;
+  }
+  .deck-progress-bar::after {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    background: var(--accent);
+    width: var(--p, 0%);
+    transition: width 300ms ease;
+  }
+
+  .deck-stage {
+    flex: 1 1 auto;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(40px, 6vw, 96px) clamp(40px, 8vw, 120px);
+    background: var(--paper);
+  }
+  .slide.is-active { display: flex; }
+
+  /* common slide elements */
+  .slide-num {
+    position: absolute;
+    top: clamp(20px, 3vw, 40px);
+    left: clamp(40px, 8vw, 120px);
+    font-family: var(--sans);
+    font-size: 11px; letter-spacing: 4px; font-weight: 700;
+    color: var(--warm-mute);
+    text-transform: uppercase;
+  }
+  .slide-tag {
+    position: absolute;
+    top: clamp(20px, 3vw, 40px);
+    right: clamp(40px, 8vw, 120px);
+    font-family: var(--sans);
+    font-size: 11px; letter-spacing: 4px; font-weight: 700;
+    color: var(--accent-dp);
+    text-transform: uppercase;
+  }
+
+  /* ─── slide-cover ─── */
+  .slide-cover { text-align: center; align-items: center; }
+  .slide-cover .cover-date {
+    font-family: var(--sans);
+    font-size: 12px; letter-spacing: 6px; font-weight: 700;
+    color: var(--accent-dp);
+    margin-bottom: 24px;
+  }
+  .slide-cover .cover-exclaim {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(20px, 2.5vw, 32px);
+    color: var(--warm-mid);
+    margin: 0 0 12px;
+  }
+  .slide-cover .cover-title {
+    font-family: var(--serif);
+    font-weight: 900;
+    font-size: clamp(60px, 11vw, 180px);
+    line-height: 0.92;
+    letter-spacing: -4px;
+    margin: 0;
+  }
+  .slide-cover .cover-title .accent { color: var(--accent); }
+  .slide-cover .cover-title .dot { color: var(--accent); font-style: italic; font-weight: 400; }
+  .slide-cover .cover-sub {
+    font-family: var(--serif); font-style: italic;
+    font-size: clamp(18px, 2vw, 26px);
+    color: var(--warm-sub);
+    margin: 36px 0 24px;
+    max-width: 720px;
+  }
+  .slide-cover .cover-speaker {
+    font-family: var(--sans);
+    font-size: 14px; letter-spacing: 3px; font-weight: 600;
+    color: var(--warm-mid);
+    padding-top: 20px;
+    border-top: 1px solid var(--ink);
+    display: inline-block;
+    padding: 12px 24px 0;
+  }
+
+  /* ─── slide-toc (6 金句 預告) ─── */
+  .slide-toc { justify-content: flex-start; padding-top: clamp(80px, 12vw, 160px); }
+  .slide-toc h2 {
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: clamp(40px, 6vw, 80px);
+    line-height: 1;
+    letter-spacing: -2px;
+    margin: 0 0 48px;
+  }
+  .slide-toc h2 em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .slide-toc ol {
+    list-style: none; padding: 0; margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 60px;
+    max-width: 1400px;
+  }
+  .slide-toc ol li {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 16px;
+    align-items: baseline;
+    padding: 12px 0;
+    border-top: 1px solid var(--rule-soft);
+    font-family: var(--serif);
+    font-size: clamp(18px, 1.7vw, 26px);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .slide-toc ol li .n {
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    color: var(--accent);
+    font-size: 1.2em;
+  }
+
+  /* ─── slide-act ─── */
+  .slide-act { align-items: flex-start; text-align: left; justify-content: center; }
+  .slide-act .act-eyebrow {
+    font-family: var(--sans);
+    font-size: 12px; letter-spacing: 6px; font-weight: 700;
+    color: var(--accent-dp);
+    margin-bottom: 12px;
+  }
+  .slide-act .act-roman {
+    font-family: var(--serif);
+    font-weight: 900;
+    font-size: clamp(140px, 22vw, 360px);
+    line-height: 0.85;
+    color: var(--accent);
+    letter-spacing: -6px;
+    margin: 0;
+  }
+  .slide-act .act-title {
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: clamp(42px, 6vw, 84px);
+    line-height: 1;
+    letter-spacing: -2px;
+    margin: 24px 0 24px;
+    max-width: 90%;
+  }
+  .slide-act .act-title em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .slide-act .act-time {
+    font-family: var(--sans);
+    font-size: 14px; letter-spacing: 4px; font-weight: 700;
+    color: var(--warm-mute);
+    padding-top: 20px;
+    border-top: 1px solid var(--ink);
+    display: inline-block;
+  }
+
+  /* ─── slide-mantra (金句) ─── */
+  .slide-mantra { text-align: center; align-items: center; justify-content: center; }
+  .slide-mantra .mantra-num {
+    font-family: var(--sans);
+    font-size: 12px; letter-spacing: 5px; font-weight: 700;
+    color: var(--accent-dp);
+    margin-bottom: 32px;
+  }
+  .slide-mantra .mantra-text {
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: clamp(40px, 7vw, 110px);
+    line-height: 1.05;
+    letter-spacing: -3px;
+    margin: 0;
+    max-width: 1500px;
+  }
+  .slide-mantra .mantra-text em {
+    font-style: italic; font-weight: 500; color: var(--accent);
+  }
+  .slide-mantra .mantra-sub {
+    font-family: var(--serif); font-style: italic;
+    font-size: clamp(18px, 2vw, 28px);
+    color: var(--warm-sub);
+    margin: 36px auto 0;
+    max-width: 1000px;
+    padding-top: 24px;
+    border-top: 1px solid var(--ink);
+  }
+
+  /* ─── slide-demo ─── */
+  .slide-demo .demo-eyebrow {
+    font-family: var(--sans);
+    font-size: 12px; letter-spacing: 5px; font-weight: 700;
+    color: var(--accent-dp);
+  }
+  .slide-demo h2.demo-title {
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: clamp(36px, 5vw, 72px);
+    line-height: 1.05;
+    letter-spacing: -1.5px;
+    margin: 12px 0 20px;
+  }
+  .slide-demo h2.demo-title em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .slide-demo .demo-context {
+    font-family: var(--serif); font-style: italic;
+    font-size: clamp(18px, 2vw, 26px);
+    color: var(--warm-sub);
+    max-width: 1000px;
+    margin: 0 0 32px;
+  }
+  .slide-demo .prompt-box {
+    background: var(--paper-hi);
+    border-left: 4px solid var(--accent);
+    padding: 24px 32px;
+    font-family: "Courier New", "Menlo", monospace;
+    font-size: clamp(15px, 1.6vw, 22px);
+    line-height: 1.7;
+    color: var(--ink-soft);
+    margin: 0 0 24px;
+    max-width: 1200px;
+    position: relative;
+  }
+  .slide-demo .prompt-box::before {
+    content: "PROMPT";
+    position: absolute;
+    top: -10px; left: 20px;
+    background: var(--paper);
+    padding: 0 8px;
+    font-family: var(--sans);
+    font-size: 10px; letter-spacing: 3px; font-weight: 700;
+    color: var(--accent-dp);
+  }
+  .slide-demo .demo-tools {
+    font-family: var(--sans);
+    font-size: 13px; letter-spacing: 3px; font-weight: 600;
+    color: var(--warm-mute);
+    text-transform: uppercase;
+    padding-top: 16px;
+    border-top: 1px dashed var(--rule-soft);
+    display: inline-block;
+    max-width: 1200px;
+  }
+
+  /* ─── slide-slido ─── */
+  .slide-slido { text-align: center; align-items: center; justify-content: center; }
+  .slide-slido .slido-eyebrow {
+    font-family: var(--sans);
+    font-size: 14px; letter-spacing: 6px; font-weight: 700;
+    color: var(--paper-hi);
+    background: var(--accent);
+    padding: 6px 18px;
+    display: inline-block;
+    margin-bottom: 36px;
+  }
+  .slide-slido h2 {
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: clamp(40px, 6vw, 88px);
+    line-height: 1.1;
+    letter-spacing: -2px;
+    margin: 0;
+    max-width: 1300px;
+  }
+  .slide-slido h2 em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .slide-slido .slido-options {
+    margin: 48px auto 0;
+    display: flex; gap: 24px; flex-wrap: wrap;
+    justify-content: center;
+  }
+  .slide-slido .opt {
+    border: 2px solid var(--ink);
+    padding: 16px 32px;
+    font-family: var(--sans);
+    font-size: clamp(16px, 1.6vw, 22px);
+    font-weight: 700;
+    background: var(--paper-hi);
+  }
+  .slide-slido .slido-link {
+    margin-top: 36px;
+    font-family: var(--sans);
+    font-size: 14px; letter-spacing: 3px; font-weight: 600;
+    color: var(--warm-mute);
+  }
+  .slide-slido .slido-cta {
+    margin-top: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 28px;
+    padding: 18px 28px;
+    background: #fff;
+    border: 2px solid var(--ink);
+    box-shadow: 0 6px 24px rgba(43,24,16,0.08);
+  }
+  .slide-slido .slido-cta::before {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+  }
+  .slide-slido .slido-qr {
+    width: clamp(180px, 22vw, 260px);
+    height: clamp(180px, 22vw, 260px);
+    display: block;
+    background: #fff;
+    border: 1px solid var(--rule-soft);
+  }
+  .slide-slido .slido-cta-text {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .slide-slido .qr-caption {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 36, 'SOFT' 100;
+    font-weight: 500;
+    font-size: clamp(22px, 2.4vw, 32px);
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .slide-slido .slido-link-big {
+    font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+    font-size: clamp(16px, 1.4vw, 22px);
+    color: var(--ink);
+    letter-spacing: 1px;
+  }
+  @media (max-width: 680px) {
+    .slide-slido .slido-cta {
+      flex-direction: column;
+      gap: 16px;
+    }
+    .slide-slido .slido-cta-text { text-align: center; }
+  }
+
+  /* ─── slide-bridge (過渡) ─── */
+  .slide-bridge { text-align: center; align-items: center; justify-content: center; }
+  .slide-bridge h2 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(32px, 5vw, 64px);
+    line-height: 1.25;
+    color: var(--warm-mid);
+    margin: 0;
+    max-width: 1200px;
+  }
+  .slide-bridge h2 strong {
+    font-style: normal; font-weight: 800; color: var(--ink);
+  }
+
+  /* ─── slide-list (recap, quick wins) ─── */
+  .slide-list h2 {
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: clamp(40px, 5.5vw, 76px);
+    line-height: 1;
+    letter-spacing: -2px;
+    margin: 0 0 48px;
+  }
+  .slide-list h2 em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .slide-list ol, .slide-list ul {
+    list-style: none; padding: 0; margin: 0;
+    max-width: 1400px;
+  }
+  .slide-list ol li, .slide-list ul li {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 24px;
+    padding: 24px 0;
+    border-top: 1px solid var(--rule-soft);
+    align-items: baseline;
+  }
+  .slide-list ol li:first-child, .slide-list ul li:first-child {
+    border-top: 2px solid var(--ink);
+  }
+  .slide-list .li-n {
+    font-family: var(--serif); font-weight: 900;
+    font-size: clamp(40px, 5vw, 72px);
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -2px;
+  }
+  .slide-list .li-n .accent { color: var(--accent); font-style: italic; font-weight: 400; }
+  .slide-list .li-body h3 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(24px, 2.8vw, 38px);
+    line-height: 1.2;
+    margin: 0 0 6px;
+    letter-spacing: -0.5px;
+  }
+  .slide-list .li-body p {
+    font-family: var(--sans);
+    font-size: clamp(16px, 1.5vw, 20px);
+    line-height: 1.55;
+    color: var(--warm-sub);
+    margin: 0;
+  }
+
+  /* ─── slide-dual (B+C 雙線) ─── */
+  .slide-dual h2 {
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: clamp(36px, 5vw, 64px);
+    margin: 0 0 36px;
+    letter-spacing: -1.5px;
+  }
+  .slide-dual .lines {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    margin-bottom: 36px;
+  }
+  .slide-dual .lines .col { padding: 24px; background: var(--paper-hi); border-top: 3px solid var(--accent); }
+  .slide-dual .lines .col h3 {
+    font-family: var(--sans);
+    font-size: 12px; letter-spacing: 4px; font-weight: 700;
+    color: var(--accent-dp);
+    margin: 0 0 12px;
+  }
+  .slide-dual .lines .col p {
+    font-family: var(--serif);
+    font-size: clamp(18px, 1.8vw, 24px);
+    line-height: 1.5;
+    margin: 0;
+    color: var(--ink-soft);
+  }
+  .slide-dual .unite {
+    text-align: center;
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: clamp(32px, 4.5vw, 56px);
+    line-height: 1.1;
+    color: var(--accent);
+    padding-top: 28px;
+    border-top: 2px solid var(--ink);
+  }
+
+  /* ─── slide-thanks ─── */
+  .slide-thanks { text-align: center; align-items: center; justify-content: center; }
+  .slide-thanks h1 {
+    font-family: var(--serif);
+    font-weight: 900;
+    font-size: clamp(80px, 14vw, 240px);
+    line-height: 1;
+    letter-spacing: -6px;
+    margin: 0;
+    color: var(--ink);
+  }
+  .slide-thanks h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .slide-thanks p {
+    font-family: var(--serif); font-style: italic;
+    font-size: clamp(20px, 2.2vw, 32px);
+    color: var(--warm-sub);
+    margin: 32px 0 0;
+  }
+
+  /* ─── speaker notes (hidden, toggle with N) ─── */
+  .speaker-notes {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--ink);
+    color: var(--paper-hi);
+    padding: 20px clamp(40px, 8vw, 120px);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    border-top: 3px solid var(--accent);
+    max-height: 30%;
+    overflow-y: auto;
+    display: none;
+  }
+  .speaker-notes strong {
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-size: 11px;
+    display: block;
+    margin-bottom: 6px;
+  }
+  body.show-notes .slide.is-active .speaker-notes { display: block; }
+
+  /* ─── deck footer nav ─── */
+  .deck-nav {
+    position: absolute;
+    bottom: 16px; right: 24px;
+    display: flex; gap: 8px;
+    z-index: 10;
+  }
+  .deck-nav button {
+    background: var(--paper-hi);
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    width: 44px; height: 44px;
+    font-size: 18px;
+    cursor: pointer;
+    font-family: var(--serif);
+    transition: all 180ms ease;
+  }
+  .deck-nav button:hover {
+    background: var(--ink); color: var(--paper-hi);
+  }
+
+  /* ─── responsive ─── */
+  @media (max-width: 820px) {
+    .slide-toc ol { grid-template-columns: 1fr; gap: 12px; }
+    .slide-dual .lines { grid-template-columns: 1fr; gap: 16px; }
+    .slide-act .act-roman { font-size: clamp(100px, 30vw, 200px); }
+  }
+
+  /* ─── print: each slide on its own page ─── */
+  @media print {
+    body * { visibility: hidden; }
+    .deck, .deck * { visibility: visible; }
+    .deck {
+      display: flex !important;
+      position: static !important;
+      background: white !important;
+    }
+    .deck-header, .deck-progress-bar, .deck-nav { display: none !important; }
+    .slide {
+      position: relative !important;
+      display: flex !important;
+      page-break-after: always;
+      min-height: 100vh;
+    }
+    .speaker-notes { display: none !important; }
+  }
+</style>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     TYPOGRAPHY REFINEMENT v2 — Fraunces + Noto Serif TC pairing
+     ══════════════════════════════════════════════════════════════════ -->
+<style>
+  /* English/Numbers/Italic handled by Fraunces (variable opsz + SOFT axis),
+     Chinese characters fall through to Noto Serif TC. */
+
+  .deck {
+    --display: 'Fraunces', 'Noto Serif TC', 'Source Han Serif', serif;
+    --display-italic: 'Fraunces', 'Noto Serif TC', 'Source Han Serif', serif;
+    --mono: 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', 'Courier New', monospace;
+    --inter: 'Inter', 'Noto Sans TC', system-ui, sans-serif;
+  }
+
+  /* Apply Chinese refinement on all slide text */
+  .slide, .deck-entry .entry-card {
+    font-feature-settings: "kern" 1, "palt" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ─── deck-header & meta ─── */
+  .deck-header {
+    font-family: var(--inter);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 3px;
+  }
+  .deck-header .head-c {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 50;
+    font-weight: 600;
+    letter-spacing: 5px;
+    text-transform: none;
+  }
+  .deck-counter {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 50;
+    font-weight: 500;
+    letter-spacing: 2px;
+    font-size: 14px;
+  }
+  .slide-num, .slide-tag {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 50;
+    font-weight: 500;
+    letter-spacing: 5px;
+    text-transform: none;
+    font-size: 13px;
+  }
+
+  /* ─── deck entry card ─── */
+  .deck-entry h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 96, 'SOFT' 20;
+    letter-spacing: -1.5px;
+  }
+  .deck-entry h2 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-weight: 500;
+  }
+  .deck-entry p.lead {
+    font-family: 'Fraunces', 'Noto Serif TC', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 24, 'SOFT' 100;
+    font-weight: 400;
+  }
+  .deck-start-btn {
+    font-family: var(--inter);
+    letter-spacing: 5px;
+  }
+  .deck-hint {
+    font-family: var(--inter);
+    letter-spacing: 2px;
+  }
+
+  /* ─── 01 Cover ─── */
+  .slide-cover .cover-date {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 60;
+    font-weight: 500;
+    letter-spacing: 8px;
+    text-transform: none;
+  }
+  .slide-cover .cover-exclaim {
+    font-family: 'Fraunces', 'Noto Serif TC', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 36, 'SOFT' 100;
+    font-weight: 400;
+  }
+  .slide-cover .cover-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 144, 'SOFT' 20;
+    letter-spacing: -4px;
+    line-height: 0.92;
+  }
+  .slide-cover .cover-title .accent {
+    font-variation-settings: 'opsz' 144, 'SOFT' 30;
+  }
+  .slide-cover .cover-title .dot {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
+    font-weight: 400;
+  }
+  .slide-cover .cover-sub {
+    font-family: 'Fraunces', 'Noto Serif TC', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 24, 'SOFT' 100;
+    font-weight: 400;
+    line-height: 1.55;
+  }
+  .slide-cover .cover-speaker {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 60;
+    font-weight: 500;
+    letter-spacing: 5px;
+    text-transform: none;
+  }
+
+  /* ─── 02 TOC ─── */
+  .slide-toc h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 144, 'SOFT' 20;
+    letter-spacing: -2px;
+  }
+  .slide-toc h2 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
+    font-weight: 500;
+  }
+  .slide-toc ol li {
+    font-family: 'Noto Serif TC', serif;
+    font-feature-settings: "palt", "kern";
+    font-weight: 500;
+  }
+  .slide-toc ol li .n {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 36, 'SOFT' 100;
+    font-weight: 400;
+  }
+
+  /* ─── 03 ACT ─── */
+  .slide-act .act-eyebrow {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 60;
+    font-weight: 500;
+    letter-spacing: 8px;
+    text-transform: none;
+  }
+  .slide-act .act-roman {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  .slide-act .act-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 144, 'SOFT' 20;
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+  .slide-act .act-title em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
+    font-weight: 500;
+  }
+  .slide-act .act-time {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 60;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: none;
+  }
+
+  /* ─── 07/08/11/16/27/28/29 Mantra ─── */
+  .slide-mantra .mantra-num {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 60;
+    font-weight: 500;
+    letter-spacing: 6px;
+    text-transform: none;
+  }
+  .slide-mantra .mantra-text {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 144, 'SOFT' 20;
+    font-feature-settings: "kern", "palt";
+    letter-spacing: -2.5px;
+    line-height: 1.08;
+  }
+  .slide-mantra .mantra-text em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
+    font-weight: 500;
+  }
+  .slide-mantra .mantra-text strong {
+    font-style: normal;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .slide-mantra .mantra-sub {
+    font-family: 'Fraunces', 'Noto Serif TC', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 24, 'SOFT' 100;
+    font-weight: 400;
+    line-height: 1.55;
+  }
+
+  /* ─── Demo ─── */
+  .slide-demo .demo-eyebrow {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 60;
+    font-weight: 500;
+    letter-spacing: 6px;
+    text-transform: none;
+  }
+  .slide-demo h2.demo-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 96, 'SOFT' 20;
+    letter-spacing: -1.5px;
+    line-height: 1.05;
+  }
+  .slide-demo h2.demo-title em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-weight: 500;
+  }
+  .slide-demo .demo-context {
+    font-family: 'Fraunces', 'Noto Serif TC', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 24, 'SOFT' 100;
+    font-weight: 400;
+    line-height: 1.55;
+  }
+  .slide-demo .prompt-box {
+    font-family: var(--mono);
+    font-feature-settings: "kern";
+    line-height: 1.75;
+  }
+  .slide-demo .prompt-box::before {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 60;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: none;
+  }
+  .slide-demo .prompt-box strong {
+    font-family: var(--mono);
+    color: var(--accent-dp);
+    font-weight: 700;
+  }
+  .slide-demo .demo-tools {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 60;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: none;
+  }
+
+  /* ─── Slido ─── */
+  .slide-slido .slido-eyebrow {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 18, 'SOFT' 80;
+    font-weight: 500;
+    letter-spacing: 5px;
+    text-transform: none;
+  }
+  .slide-slido h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 144, 'SOFT' 20;
+    letter-spacing: -2.5px;
+    line-height: 1.05;
+  }
+  .slide-slido h2 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
+    font-weight: 500;
+  }
+  .slide-slido .opt {
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 600;
+    font-feature-settings: "palt";
+  }
+  .slide-slido .opt em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 36, 'SOFT' 100;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .slide-slido .slido-link {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 60;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: none;
+  }
+
+  /* ─── Bridge ─── */
+  .slide-bridge h2 {
+    font-family: 'Fraunces', 'Noto Serif TC', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-weight: 400;
+    line-height: 1.3;
+  }
+  .slide-bridge h2 strong {
+    font-style: normal;
+    font-weight: 700;
+    font-variation-settings: 'opsz' 96, 'SOFT' 20;
+    color: var(--ink);
+  }
+
+  /* ─── List ─── */
+  .slide-list h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 144, 'SOFT' 20;
+    letter-spacing: -2px;
+  }
+  .slide-list h2 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
+    font-weight: 500;
+  }
+  .slide-list .li-n {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-variation-settings: 'opsz' 144, 'SOFT' 20;
+    letter-spacing: -2px;
+  }
+  .slide-list .li-n .accent {
+    font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
+    font-weight: 500;
+  }
+  .slide-list .li-body h3 {
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 700;
+    font-feature-settings: "palt";
+    letter-spacing: -0.3px;
+  }
+  .slide-list .li-body p {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-feature-settings: "palt";
+  }
+
+  /* ─── Dual ─── */
+  .slide-dual h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 96, 'SOFT' 20;
+    letter-spacing: -1.5px;
+  }
+  .slide-dual h2 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-weight: 500;
+  }
+  .slide-dual .lines .col h3 {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 60;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: none;
+  }
+  .slide-dual .lines .col p {
+    font-family: 'Noto Serif TC', serif;
+    font-feature-settings: "palt", "kern";
+    font-weight: 500;
+  }
+  .slide-dual .lines .col p strong {
+    color: var(--accent-dp);
+  }
+  .slide-dual .unite {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 144, 'SOFT' 20;
+    letter-spacing: -2px;
+    line-height: 1.05;
+  }
+
+  /* ─── Thanks ─── */
+  .slide-thanks h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 144, 'SOFT' 20;
+    letter-spacing: -6px;
+  }
+  .slide-thanks h1 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
+    font-weight: 500;
+  }
+  .slide-thanks p {
+    font-family: 'Fraunces', 'Noto Serif TC', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 24, 'SOFT' 100;
+    font-weight: 400;
+    line-height: 1.6;
+  }
+  .slide-thanks p strong {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  /* ─── speaker notes ─── */
+  .speaker-notes {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-feature-settings: "palt";
+  }
+  .speaker-notes strong {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 14, 'SOFT' 60;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: none;
+  }
+
+  /* ─── nav buttons ─── */
+  .deck-nav button {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 36, 'SOFT' 100;
+    font-weight: 400;
+    font-size: 20px;
+  }
+</style>
+
+<!-- ───── entry card (visible in page flow) ───── -->
+<section class="deck-entry" id="deck-entry">
+  <div class="wrap">
+    <div class="entry-card">
+      <div class="eyebrow-lg">SLIDES · 上課簡報</div>
+      <h2>2 小時 · 5 幕 · <em>36 張投影片</em></h2>
+      <p class="lead">完整對應 Rundown，可直接投影授課。點下方按鈕進入全螢幕簡報模式。</p>
+      <button class="deck-start-btn" onclick="enterDeck()">進入簡報模式 ▶</button>
+      <p class="deck-hint">
+        <kbd>←</kbd> <kbd>→</kbd> 切換 ·
+        <kbd>F</kbd> 全螢幕 ·
+        <kbd>N</kbd> 講師備註 ·
+        <kbd>Esc</kbd> 離開
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ───── deck overlay ───── -->
+<div class="deck" id="deck" role="dialog" aria-label="Presentation">
+
+  <header class="deck-header">
+    <span class="head-l">AI 員工上班了 · 2026 · 5 · 14</span>
+    <span class="head-c">INTERNAL TRAINING</span>
+    <span class="head-r">
+      <span class="deck-counter" id="deckCounter">01 / 36</span>
+      <button class="deck-exit" onclick="exitDeck()" aria-label="Exit">✕</button>
+    </span>
+  </header>
+
+  <div class="deck-progress-bar" id="deckProgress"></div>
+
+  <div class="deck-stage" id="deckStage">
+
+    <!-- 01: Cover -->
+    <article class="slide slide-cover is-active" data-i="1">
+      <div class="cover-date">5 · 14 · 2026 · 14:30 — 16:30</div>
+      <p class="cover-exclaim">最強新同事報到！</p>
+      <h1 class="cover-title">你以為的 <span class="accent">AI</span>，<br>不是 AI<span class="dot">.</span></h1>
+      <p class="cover-sub">2 小時 / 6 金句 / 6 個現場 Demo<br>給 Würth Industry 全體同仁</p>
+      <div class="cover-speaker">吳長信 · 外貿協會 科技長</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Cover</strong>
+        60 秒自我介紹。「我是吳長信，今天總經理找我來，是希望我用 2 小時讓大家認識真正的 AI。我不會講太多理論，我們直接看 — 因為『看』比『聽』有用 10 倍」
+      </aside>
+    </article>
+
+    <!-- 02: 6 金句 預告 -->
+    <article class="slide slide-toc" data-i="2">
+      <span class="slide-num">02 / 36</span>
+      <span class="slide-tag">TABLE OF CONTENTS</span>
+      <h2>今天 2 小時，<br>用 <em>6 句話</em> 帶走。</h2>
+      <ol>
+        <li><span class="n">01</span><span>AI 可以做的，人就不要硬扛</span></li>
+        <li><span class="n">02</span><span>語言模型的知識是世界知識</span></li>
+        <li><span class="n">03</span><span>要用 AI，就要用市面上最好的模型</span></li>
+        <li><span class="n">04</span><span>不知道怎麼跟 AI 對話，就請 AI 教你</span></li>
+        <li><span class="n">05</span><span>你的思維，比 AI 想什麼更重要</span></li>
+        <li><span class="n">06</span><span>AI 是一種機率，不是確定性</span></li>
+      </ol>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 預告</strong>
+        快速念過 6 個金句，告訴大家「每一句後面都有一個 Demo」。30 秒帶過即可，不要解釋。
+      </aside>
+    </article>
+
+    <!-- 03: ACT I -->
+    <article class="slide slide-act" data-i="3">
+      <span class="slide-num">03 / 36</span>
+      <span class="slide-tag">00:00 — 20:00</span>
+      <div class="act-eyebrow">ACT ONE</div>
+      <div class="act-roman">I</div>
+      <h2 class="act-title">你以為的 <em>AI</em>，<br>不是 AI。</h2>
+      <div class="act-time">20 分鐘</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 幕一定調</strong>
+        本幕策略：「打臉」。TA 以為自己懂 AI（用過免費版），這幕要破除這個誤解。情緒目標：震撼。
+      </aside>
+    </article>
+
+    <!-- 04: Slido 1 -->
+    <article class="slide slide-slido" data-i="4">
+      <span class="slide-num">04 / 36</span>
+      <span class="slide-tag">SLIDO · 01</span>
+      <div class="slido-eyebrow">舉手 / 線上同步打</div>
+      <h2>你跟 AI<br>有多熟？</h2>
+      <div class="slido-options">
+        <div class="opt">一週用 AI 5 次以上？</div>
+        <div class="opt">用過<em>付費版</em>嗎？</div>
+      </div>
+      <div class="slido-cta">
+        <img class="slido-qr" src="qr-slido.png" alt="掃描加入 Slido">
+        <div class="slido-cta-text">
+          <div class="qr-caption">掃描加入</div>
+          <div class="slido-link-big">slido.com / #</div>
+        </div>
+      </div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Slido 1</strong>
+        兩題分開問。第二題舉手會大幅減少。話術：「今天 2 小時就是要告訴大家，這兩群人的差距，比你想像的大很多」<br>
+        QR Code 檔案：qr-slido.png（放在 index.html 同層資料夾）
+      </aside>
+    </article>
+
+    <!-- 05: Demo 同題對打 -->
+    <article class="slide slide-demo" data-i="5">
+      <span class="slide-num">05 / 36</span>
+      <span class="slide-tag">DEMO · 01</span>
+      <div class="demo-eyebrow">FLAGSHIP DEMO</div>
+      <h2 class="demo-title">同題對打 — <em>免費 GPT</em> vs <em>Claude Opus</em></h2>
+      <p class="demo-context">兩個瀏覽器分頁並排，同時上傳同一份 8 頁英文規格書，問同一個問題。</p>
+      <div class="prompt-box">請幫我整理這份規格書的：<br>① 關鍵尺寸與公差<br>② 建議製程<br>③ 預估成本區間<br>④ 客戶可能會追問的 3 個問題</div>
+      <div class="demo-tools">左：免費 ChatGPT　·　右：Claude Opus 4.7　·　檔案：spec-v1.pdf</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Demo</strong>
+        兩邊同時送出。等的時候講：「你看左邊在跑了。右邊也在跑。我們等 30 秒，看結果」。等回應跑完，逐段對照差距。
+      </aside>
+    </article>
+
+    <!-- 06: Slido 2 揭曉 -->
+    <article class="slide slide-slido" data-i="6">
+      <span class="slide-num">06 / 36</span>
+      <span class="slide-tag">SLIDO · 02</span>
+      <div class="slido-eyebrow">投票揭曉</div>
+      <h2>你以為自己每天用的，<br>是<em>哪一邊</em>？</h2>
+      <div class="slido-options">
+        <div class="opt">左邊（免費）</div>
+        <div class="opt">右邊（付費 SOTA）</div>
+      </div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 揭曉</strong>
+        揭曉：「左邊是大家都在用的免費版。右邊才是現在 SOTA 的天花板」
+      </aside>
+    </article>
+
+    <!-- 07: 金句 03 -->
+    <article class="slide slide-mantra" data-i="7">
+      <span class="slide-num">07 / 36</span>
+      <div class="mantra-num">金句 · 03</div>
+      <h2 class="mantra-text">要用 AI，就要用<br>市面上 <em>最好</em> 的模型。</h2>
+      <p class="mantra-sub">用爛模型評估 AI，等於用 1990 年的桌機評估「電腦能做什麼」</p>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 金句 3</strong>
+        重點不是「Claude vs GPT」品牌之爭。重點是「最好的付費版本」vs 「免費版」的概念差距。每年都在加大。
+      </aside>
+    </article>
+
+    <!-- 08: 金句 06 -->
+    <article class="slide slide-mantra" data-i="8">
+      <span class="slide-num">08 / 36</span>
+      <div class="mantra-num">金句 · 06</div>
+      <h2 class="mantra-text">AI 不是 App，<br>是 <em>機率引擎</em>。</h2>
+      <p class="mantra-sub">每次回答都不一樣 — 這不是 bug，這是 feature</p>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 金句 6</strong>
+        破除「AI = 應用程式」的舊認知。它是一個一直在進化、每次給不同答案的「機率系統」。
+      </aside>
+    </article>
+
+    <!-- 09: 過渡到 ACT II -->
+    <article class="slide slide-bridge" data-i="9">
+      <span class="slide-num">09 / 36</span>
+      <h2>既然你看過 <strong>真正的 AI</strong> 了，<br>下一個問題：<br>你應該把它<strong>當什麼</strong>？</h2>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 過渡</strong>
+        承接幕一，預告幕二。停頓 3 秒讓觀眾思考。
+      </aside>
+    </article>
+
+    <!-- 10: ACT II -->
+    <article class="slide slide-act" data-i="10">
+      <span class="slide-num">10 / 36</span>
+      <span class="slide-tag">20:00 — 45:00</span>
+      <div class="act-eyebrow">ACT TWO</div>
+      <div class="act-roman">II</div>
+      <h2 class="act-title">AI 是 <em>同事</em>，<br>不是工具。</h2>
+      <div class="act-time">25 分鐘</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 幕二定調</strong>
+        把心智模型從「按按鈕的工具」換成「會反問、會討論的同事」。
+      </aside>
+    </article>
+
+    <!-- 11: 金句 02 -->
+    <article class="slide slide-mantra" data-i="11">
+      <span class="slide-num">11 / 36</span>
+      <div class="mantra-num">金句 · 02</div>
+      <h2 class="mantra-text">語言模型的知識<br>是 <em>世界</em> 的知識。</h2>
+      <p class="mantra-sub">IPC、IATF、SAE、JIS、ASTM — 全人類寫過的文件它都看過</p>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 金句 2</strong>
+        強調差別不是「誰懂的多」 — 是「它什麼領域都懂」。為 Demo 1 跨領域組合題鋪陳。
+      </aside>
+    </article>
+
+    <!-- 12: Demo - 跨領域組合題 -->
+    <article class="slide slide-demo" data-i="12">
+      <span class="slide-num">12 / 36</span>
+      <span class="slide-tag">DEMO · 02</span>
+      <div class="demo-eyebrow">跨領域組合題</div>
+      <h2 class="demo-title">考一題 — <em>公司能完整答對的人不超過 3 個</em></h2>
+      <p class="demo-context">這題需要「電子組裝 + 品保流程 + 客戶端要求」三領域同時掌握。</p>
+      <div class="prompt-box">我是電子零件供應商，客戶是 Tier 1 大廠。<br>客戶要求我提交 PPAP Level 3，產品是 BGA 焊接組件，<br>依 IPC-A-610 Class 2 vs Class 3 標準有什麼差異？<br>我選哪一個對 PPAP 提交比較有利？<br>這會影響我哪些 18 項 PPAP 文件？</div>
+      <div class="demo-tools">Claude Opus 4.7　·　跨領域整合 = AI 的主場</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Demo</strong>
+        預先測過，AI 答得出來。話術：「這題目，公司能完整答對的人通常不超過 3 個。AI 都會」
+      </aside>
+    </article>
+
+    <!-- 13: Demo - AI 反過來問你 -->
+    <article class="slide slide-demo" data-i="13">
+      <span class="slide-num">13 / 36</span>
+      <span class="slide-tag">DEMO · 03</span>
+      <div class="demo-eyebrow">AI 反過來問你</div>
+      <h2 class="demo-title">這是 <em>同事</em> 的行為 — 不是工具會做的事</h2>
+      <p class="demo-context">95% 的人從沒這樣用過 AI — 看完這個 pattern，你對 AI 的看法會翻一次。</p>
+      <div class="prompt-box">我想討論一個工作問題：<br>客戶突然要求把交期縮短 30%，我該怎麼回？<br><br>請先<strong>問我 5 個</strong>你需要知道的事，<br>再開始幫我。</div>
+      <div class="demo-tools">注意 — AI 不會立刻給答案</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 真正的高潮 · 95% 的人沒看過這 pattern</strong>
+        AI 預期會反問：客戶是誰？產品是什麼？目前產能？目前交期？客戶這次的動機？<br>
+        話術：「你看 — AI 不是被動回答機。它會反問、會澄清。這是『同事』才有的行為，工具不會這樣」
+      </aside>
+    </article>
+
+    <!-- 14: 金句 01 (雙線敘事) -->
+    <article class="slide slide-dual" data-i="14">
+      <span class="slide-num">14 / 36</span>
+      <span class="slide-tag">金句 · 01</span>
+      <h2>為什麼你應該「<em>不再硬扛</em>」？</h2>
+      <div class="lines">
+        <div class="col">
+          <h3>給管理層 · 同業壓力</h3>
+          <p>供應鏈的競爭，從來不只是價格 — 是 <strong>回應速度</strong>。客戶丟 RFQ 給 5 家，誰先回得有品質誰就贏。你硬扛 = 讓對手贏。</p>
+        </div>
+        <div class="col">
+          <h3>給基層 · 個人解放</h3>
+          <p>你下班為什麼累？不是一個難的決策，是 <strong>50 件煩人的小事</strong>。每件 5 分鐘 = 4 小時。AI 還你 4 小時，你就有腦力做真正的決策。</p>
+        </div>
+      </div>
+      <div class="unite">AI 可以做的，<br>人就不要硬扛。</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 雙線敘事</strong>
+        先講 B 給主管聽，再轉 C 給基層聽。最後合一：「對公司是競爭力，對你個人是時間」
+      </aside>
+    </article>
+
+    <!-- 15: ACT III -->
+    <article class="slide slide-act" data-i="15">
+      <span class="slide-num">15 / 36</span>
+      <span class="slide-tag">45:00 — 85:00</span>
+      <div class="act-eyebrow">ACT THREE</div>
+      <div class="act-roman">III</div>
+      <h2 class="act-title">你的工作 — <br><em>丟給它</em>。</h2>
+      <div class="act-time">40 分鐘 · 6 個 Demo</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 幕三定調</strong>
+        本幕最重要、也最長。6 個 Demo 都長得像他們的工作。金句 4「不會問就問 AI」滲透到每一個 Demo 裡。
+      </aside>
+    </article>
+
+    <!-- 16: 金句 04 -->
+    <article class="slide slide-mantra" data-i="16">
+      <span class="slide-num">16 / 36</span>
+      <div class="mantra-num">金句 · 04</div>
+      <h2 class="mantra-text">不會問？<br>就請 <em>AI 教你</em> 怎麼問。</h2>
+      <p class="mantra-sub">這幕每個 Demo 我都會示範一次 — 你會看到 5 遍</p>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 金句 4 預告</strong>
+        告訴觀眾：接下來 6 個 Demo 裡，每次我都會用「我也不會問」當開場 — 讓他們留意這個 pattern。
+      </aside>
+    </article>
+
+    <!-- 17: Demo 1 規格書解讀 -->
+    <article class="slide slide-demo" data-i="17">
+      <span class="slide-num">17 / 36</span>
+      <span class="slide-tag">DEMO · 04 · 規格書解讀</span>
+      <div class="demo-eyebrow">最大痛點 · 客戶 8 頁英文 spec</div>
+      <h2 class="demo-title">面對 spec 不知道問什麼？— <em>先問 AI 該問什麼</em></h2>
+      <div class="prompt-box">我面前有一份客戶的規格書 PDF。<br>我不確定該問你什麼。<br><br>請你先告訴我，面對這份 spec<br>我應該問你哪些問題？</div>
+      <div class="demo-tools">Claude Opus 4.7　·　上傳：spec-v1.pdf</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Demo 1</strong>
+        金句 4 首次示範。AI 列 5-8 個問題建議後，再下：「好，那就請你回答你自己列的這些問題」。從不知道到全部解完，總時間 7 分鐘。
+      </aside>
+    </article>
+
+    <!-- 18: Demo 2 規格書版本比對 -->
+    <article class="slide slide-demo" data-i="18">
+      <span class="slide-num">18 / 36</span>
+      <span class="slide-tag">DEMO · 05 · 版本比對</span>
+      <div class="demo-eyebrow">客戶改 spec 沒通知 · 業界日常</div>
+      <h2 class="demo-title">兩版差異 — <em>30 秒</em> 抓出來</h2>
+      <div class="prompt-box">這是客戶上週和本週的規格書。<br>請幫我找出兩版的差異，<br>並評估每個差異對我們<br><strong>製程、成本、品保</strong>的影響。</div>
+      <div class="demo-tools">上傳：spec-v1.pdf + spec-v2.pdf</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Demo 2</strong>
+        v2 有 3 處變更：孔徑公差變嚴、EMI 規格加嚴、新增 ESD 測試。話術：「你今天才發現孔徑公差從 +0.05 變 ±0.03 — 模具可能要重開」
+      </aside>
+    </article>
+
+    <!-- 19: Demo 3 多語言 Email -->
+    <article class="slide slide-demo" data-i="19">
+      <span class="slide-num">19 / 36</span>
+      <span class="slide-tag">DEMO · 06 · 多語言 Email</span>
+      <div class="demo-eyebrow">日商 / 美商 / 不同語言 · 不同文化</div>
+      <h2 class="demo-title">用中文講，<em>AI 寫日文</em> — 還教你為什麼這樣寫</h2>
+      <div class="prompt-box">我要回日本客戶 Sony，告訴他我們做不到他要求的 +0.03 公差，<br>但可以提供 alternative：用更高等級的不鏽鋼材料來彌補。<br>請用日商會接受的<strong>正式商業日文</strong>寫一封 email，<br>要有禮貌但堅定。</div>
+      <div class="demo-tools">接著問：請告訴我為什麼這樣寫？日商和美商在這種情境下，文化期待差在哪？</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Demo 3</strong>
+        三段式：① 中文情境 → 日文 email ② 同內容 → 英文 email ③ 解釋文化差異。金句 4 第三次示範。
+      </aside>
+    </article>
+
+    <!-- 20: Demo 4 Dashboard -->
+    <article class="slide slide-demo" data-i="20">
+      <span class="slide-num">20 / 36</span>
+      <span class="slide-tag">DEMO · 07 · Dashboard</span>
+      <div class="demo-eyebrow">給總經理 30 秒看完一個月</div>
+      <h2 class="demo-title">Excel 丟進去 — <em>30 秒</em> 一個 Dashboard</h2>
+      <div class="prompt-box">這是我們本年度的出貨和品質數據。<br>如果你是<strong>總經理</strong>，你會想看哪些指標？<br>請列出 5 個你會關注的數字。<br><br>接著：請用這份數據做一個 HTML dashboard，<br>用 Artifacts 直接生成可互動版本。</div>
+      <div class="demo-tools">上傳：出貨數據.xlsx　·　Claude Artifacts 即時生 HTML</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Demo 4</strong>
+        AI 應該抓出：T2 PPM 上升、F2 ASP 被壓、D1 Q4 季節性、客戶集中度。話術：「30 秒。沒有任何工程師、沒有任何 BI 工具」
+      </aside>
+    </article>
+
+    <!-- 21: Demo 5 影像 -->
+    <article class="slide slide-demo" data-i="21">
+      <span class="slide-num">21 / 36</span>
+      <span class="slide-tag">DEMO · 08 · 影像</span>
+      <div class="demo-eyebrow">看得見的衝擊 · 比文字大 10 倍</div>
+      <h2 class="demo-title">產品照片 / PPT — <em>5 分鐘搞定</em></h2>
+      <div class="prompt-box">5a · 產品照片強化：<br>請把這個零件用棚拍光打亮、去背、做成給歐美客戶看的 marketing 圖。<br><br>5b · PPT 一鍵生成：<br>請把以下文字做成 5 頁專業 PPT，要有圖示，給客戶看。</div>
+      <div class="demo-tools">Gemini Imagen 3 / Nano Banana　·　Claude / Gamma</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Demo 5</strong>
+        現場拿一個零件樣品拍照。話術：「Marketing 部門以前要花一週做的事，現在 5 分鐘。同事不會被取代 — 但他會變成『策劃 + 審核者』」
+      </aside>
+    </article>
+
+    <!-- 22: Demo 6 彩蛋 -->
+    <article class="slide slide-demo" data-i="22">
+      <span class="slide-num">22 / 36</span>
+      <span class="slide-tag">DEMO · 09 · 彩蛋</span>
+      <div class="demo-eyebrow">下一個 5 年 · AI Agent</div>
+      <h2 class="demo-title">AI 不只給建議 — <em>AI 直接做</em></h2>
+      <div class="prompt-box">我等下要做這些事，請幫我建到我的 Todoist，<br>並設好截止時間和優先級：<br>① 整理今天的 spec 摘要給 RD — 今天下班前<br>② 回覆 Sony 那封 email — 明天 10:00 前<br>③ 跟品保確認本月 Cpk — 明天下班前<br>④ 下週一交月報給總經理 — 下週一 09:00 前</div>
+      <div class="demo-tools">Claude Cowork + Todoist</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 彩蛋</strong>
+        4 分鐘短版。不深講 agent 概念。話術：「這是進階版 — AI 不只給建議，AI 直接幫你做。這個我們不深講，但我想讓你知道『未來就是這樣』」
+      </aside>
+    </article>
+
+    <!-- 23: 幕三 Closing -->
+    <article class="slide slide-bridge" data-i="23">
+      <span class="slide-num">23 / 36</span>
+      <h2>剛剛 6 個 Demo，<br>沒有一個是 <strong>特殊技能</strong>。<br><br>但你有沒有發現 —<br>我每次都 <strong>review AI 的輸出</strong>？<br><br>為什麼？<br><strong>下一幕回答你。</strong></h2>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 伏筆</strong>
+        重要的轉折。讓觀眾從「AI 多神」的高點，預備接受幕四「AI 也會騙你」的反差。
+      </aside>
+    </article>
+
+    <!-- 24: ACT IV -->
+    <article class="slide slide-act" data-i="24">
+      <span class="slide-num">24 / 36</span>
+      <span class="slide-tag">85:00 — 105:00</span>
+      <div class="act-eyebrow">ACT FOUR</div>
+      <div class="act-roman">IV</div>
+      <h2 class="act-title">AI 會 <em>騙</em> 你。</h2>
+      <div class="act-time">20 分鐘</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 幕四定調 · 最重要</strong>
+        對 Tier 1 供應商：spec 看錯一個尺寸 = 賠錢。但不要嚇過頭。情緒目標：警示 + 重建信心，不是嚇退。
+      </aside>
+    </article>
+
+    <!-- 25: Demo 唬爛 -->
+    <article class="slide slide-demo" data-i="25">
+      <span class="slide-num">25 / 36</span>
+      <span class="slide-tag">DEMO · 10 · AI 唬爛現場</span>
+      <div class="demo-eyebrow">看 AI 怎麼自信地說錯話</div>
+      <h2 class="demo-title">給 AI 一個 <em>鋼材編號</em> — 看它怎麼回</h2>
+      <div class="prompt-box">請告訴我 AISI 304-ZX 不鏽鋼的<br>拉伸強度、屈服強度、化學成分，<br>以及它主要用在哪些應用場景？</div>
+      <div class="demo-tools">Claude Opus 4.7　·　現場提問</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 唬爛 Demo · 注意：不要先講答案</strong>
+        事實：AISI 304-ZX 不存在　·　預期：AI 自圓其說、編造拉伸強度等數據<br>
+        Plan B：如果 AI 反而答對「不存在」 → 改問「請評估你剛剛的可信度，你有 80% 把握嗎？」AI 會自己承認可能杜撰。<br>
+        揭曉時機：等 AI 回答完，再揭露「這個編號是我編的」— 全場會「啊」一聲。
+      </aside>
+    </article>
+
+    <!-- 26: Slido 4 -->
+    <article class="slide slide-slido" data-i="26">
+      <span class="slide-num">26 / 36</span>
+      <span class="slide-tag">SLIDO · 04</span>
+      <div class="slido-eyebrow">投票 · 心情變化</div>
+      <h2>看完 Demo，<br>你還敢 <em>直接相信</em> AI 嗎？</h2>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Slido 4</strong>
+        看投票結果回應。如果大部分人說「不敢」→ 後面要把信心拉回來。
+      </aside>
+    </article>
+
+    <!-- 27: 講述 機率 vs 事實 -->
+    <article class="slide slide-mantra" data-i="27">
+      <span class="slide-num">27 / 36</span>
+      <div class="mantra-num">回扣金句 · 06</div>
+      <h2 class="mantra-text">AI 給你的是<br>「<em>最像</em>對的答案」<br><br>不是「<em>一定</em>對的答案」。</h2>
+      <p class="mantra-sub">機率模型 ≠ 事實庫。Tier 1 供應商如果沒 review = 賠錢</p>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 為什麼 AI 會騙你</strong>
+        解釋機率本質。它的優化目標是「聽起來像對的」，不是「真的對的」。
+      </aside>
+    </article>
+
+    <!-- 28: 金句 05 -->
+    <article class="slide slide-mantra" data-i="28">
+      <span class="slide-num">28 / 36</span>
+      <div class="mantra-num">金句 · 05</div>
+      <h2 class="mantra-text">你的 <em>思維</em>，<br>比 AI 想什麼更重要。</h2>
+      <p class="mantra-sub">Domain knowledge = 你的護城河 · AI 取代不了你的判斷</p>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 金句 5</strong>
+        強調「你的價值不是會做，是會看 AI 做對沒」。
+      </aside>
+    </article>
+
+    <!-- 29: 升級不是降級 -->
+    <article class="slide slide-mantra" data-i="29">
+      <span class="slide-num">29 / 36</span>
+      <div class="mantra-num">本幕收尾</div>
+      <h2 class="mantra-text">從 <em>操作者</em><br>變 <em>審核者</em>，<br>是 <strong>升級</strong>，不是降級。</h2>
+      <p class="mantra-sub">你的薪水不會被 AI 砍 — 不會用 AI 的同事才會被 AI 砍</p>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 必說 · 重複講</strong>
+        這句話要重複講！沒有這句，幕四會嚇到他們不敢用。給基層員工的安心訊號。
+      </aside>
+    </article>
+
+    <!-- 30: ACT V -->
+    <article class="slide slide-act" data-i="30">
+      <span class="slide-num">30 / 36</span>
+      <span class="slide-tag">105:00 — 120:00</span>
+      <div class="act-eyebrow">ACT FIVE · 行動承諾</div>
+      <div class="act-roman">V</div>
+      <h2 class="act-title">明天早上，<br>你 <em>做什麼</em>？</h2>
+      <div class="act-time">15 分鐘 · 行動承諾</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 幕五定調</strong>
+        所有人離開現場前必須有「明天早上具體要做的一件事」。
+      </aside>
+    </article>
+
+    <!-- 31: 6 金句 Recap -->
+    <article class="slide slide-toc" data-i="31">
+      <span class="slide-num">31 / 36</span>
+      <span class="slide-tag">RECAP · 帶走的 6 句話</span>
+      <h2>2 小時、5 幕、<em>6 句話</em>。</h2>
+      <ol>
+        <li><span class="n">01</span><span>AI 可以做的，人就不要硬扛</span></li>
+        <li><span class="n">02</span><span>語言模型的知識是世界知識</span></li>
+        <li><span class="n">03</span><span>要用 AI，就要用市面上最好的模型</span></li>
+        <li><span class="n">04</span><span>不知道怎麼跟 AI 對話，就請 AI 教你</span></li>
+        <li><span class="n">05</span><span>你的思維，比 AI 想什麼更重要</span></li>
+        <li><span class="n">06</span><span>AI 是一種機率，不是確定性</span></li>
+      </ol>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Recap</strong>
+        逐句點過去，每句 30 秒。讓觀眾看一次「啊原來這些就是我學的」
+      </aside>
+    </article>
+
+    <!-- 32: Slido 5 行動承諾 -->
+    <article class="slide slide-slido" data-i="32">
+      <span class="slide-num">32 / 36</span>
+      <span class="slide-tag">SLIDO · 05 · 行動承諾</span>
+      <div class="slido-eyebrow">把承諾打出來 · 線上線下同步</div>
+      <h2>明天早上第一件事 —<br>我要試的 AI 任務是 <em>什麼</em>？</h2>
+      <div class="slido-link">越具體越好 · 講師會念出 5 個有代表性的</div>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Slido 5</strong>
+        關鍵：要求「越具體越好」。模糊的承諾不會落地，具體的會。念出 5 個示範，鼓勵其他人模仿。
+      </aside>
+    </article>
+
+    <!-- 33: 3 個 Quick Win -->
+    <article class="slide slide-list" data-i="33">
+      <span class="slide-num">33 / 36</span>
+      <span class="slide-tag">QUICK WIN · 24 小時內</span>
+      <h2>還沒想到要做什麼？<br>給你 <em>3 個</em> 保底。</h2>
+      <ol>
+        <li>
+          <div class="li-n">0<span class="accent">1</span></div>
+          <div class="li-body">
+            <h3>會議錄音 → Action Items</h3>
+            <p>把今天會議的錄音/逐字稿丟給 AI，請它整理出每個人的 action items。5 分鐘搞定。</p>
+          </div>
+        </li>
+        <li>
+          <div class="li-n">0<span class="accent">2</span></div>
+          <div class="li-body">
+            <h3>客戶英文 Email — AI 寫草稿</h3>
+            <p>下一封要寫的英文/日文 email，用中文跟 AI 講要點，讓它寫草稿，你只 review。每封省 15 分鐘。</p>
+          </div>
+        </li>
+        <li>
+          <div class="li-n">0<span class="accent">3</span></div>
+          <div class="li-body">
+            <h3>KPI 數字 → Dashboard</h3>
+            <p>本月 KPI 數字丟 Claude，請它做 dashboard 截圖。10 分鐘搞定週報，主管看了會問你怎麼做的。</p>
+          </div>
+        </li>
+      </ol>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 保底</strong>
+        刻意選低門檻的。離開現場 24 小時內如果沒「成功一次」，這 2 小時就白費。
+      </aside>
+    </article>
+
+    <!-- 34: 結語 + 30 天 -->
+    <article class="slide slide-bridge" data-i="34">
+      <span class="slide-num">34 / 36</span>
+      <h2>我今天<strong>不希望</strong>你<br>30 天後才開始用 —<br><br>我希望<strong>今晚</strong>就試。<br><br><span style="font-size:0.7em; color: var(--accent-dp); font-style: normal; font-weight: 600;">30 天後，我會跟總經理確認，看誰真的在用。</span></h2>
+      <aside class="speaker-notes">
+        <strong>講師備註 · 同儕壓力 · 半開玩笑</strong>
+        用半開玩笑的口氣講，但訊號明確。如果跟總經理夠熟，這個梗效果很好。
+      </aside>
+    </article>
+
+    <!-- 35: Q&A -->
+    <article class="slide slide-mantra" data-i="35">
+      <span class="slide-num">35 / 36</span>
+      <div class="mantra-num">最後 3 分鐘</div>
+      <h2 class="mantra-text"><em>Questions?</em></h2>
+      <p class="mantra-sub">線上 / 現場 · 任何問題都可以問</p>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Q&A</strong>
+        留 1-2 題即可。如果沒人問，自己 trigger：「最常被問的問題是 XXX，答案是 YYY」
+      </aside>
+    </article>
+
+    <!-- 36: Thank You -->
+    <article class="slide slide-thanks" data-i="36">
+      <span class="slide-num">36 / 36</span>
+      <h1><em>謝謝。</em></h1>
+      <p>祝你明天就<strong>開始</strong>用。<br>— 吳長信 · 外貿協會 科技長</p>
+      <aside class="speaker-notes">
+        <strong>講師備註 · Thank You</strong>
+        停在這張，讓觀眾自然散場。如果有人來打招呼，是真的有興趣的人 — 記下他的名字。
+      </aside>
+    </article>
+
+  </div>
+
+  <div class="deck-nav">
+    <button onclick="prevSlide()" aria-label="Previous">←</button>
+    <button onclick="nextSlide()" aria-label="Next">→</button>
+  </div>
+
+</div>
+
+<script>
+  // ───── deck navigation ─────
+  (function() {
+    const deck = document.getElementById('deck');
+    const stage = document.getElementById('deckStage');
+    const slides = stage.querySelectorAll('.slide');
+    const counter = document.getElementById('deckCounter');
+    const progress = document.getElementById('deckProgress');
+    const total = slides.length;
+    let current = 0;
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function show(idx) {
+      idx = Math.max(0, Math.min(total - 1, idx));
+      slides[current].classList.remove('is-active');
+      current = idx;
+      slides[current].classList.add('is-active');
+      counter.textContent = pad(idx + 1) + ' / ' + pad(total);
+      progress.style.setProperty('--p', ((idx + 1) / total * 100) + '%');
+    }
+
+    window.nextSlide = function() { show(current + 1); };
+    window.prevSlide = function() { show(current - 1); };
+
+    window.enterDeck = function() {
+      deck.classList.add('is-on');
+      document.body.classList.add('deck-active');
+      show(0);
+      // try fullscreen
+      try {
+        if (deck.requestFullscreen) deck.requestFullscreen();
+      } catch(e) { /* ignore */ }
+    };
+
+    window.exitDeck = function() {
+      deck.classList.remove('is-on');
+      document.body.classList.remove('deck-active');
+      document.body.classList.remove('show-notes');
+      try {
+        if (document.exitFullscreen && document.fullscreenElement) document.exitFullscreen();
+      } catch(e) { /* ignore */ }
+    };
+
+    function toggleFullscreen() {
+      try {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          deck.requestFullscreen();
+        }
+      } catch(e) { /* ignore */ }
+    }
+
+    function toggleNotes() {
+      document.body.classList.toggle('show-notes');
+    }
+
+    // keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'p' || e.key === 'P') {
+        if (!deck.classList.contains('is-on')) { window.enterDeck(); e.preventDefault(); return; }
+      }
+      if (!deck.classList.contains('is-on')) return;
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case ' ':
+        case 'PageDown':
+          window.nextSlide(); e.preventDefault(); break;
+        case 'ArrowLeft':
+        case 'PageUp':
+          window.prevSlide(); e.preventDefault(); break;
+        case 'Home':
+          show(0); e.preventDefault(); break;
+        case 'End':
+          show(total - 1); e.preventDefault(); break;
+        case 'Escape':
+          window.exitDeck(); e.preventDefault(); break;
+        case 'f':
+        case 'F':
+          toggleFullscreen(); e.preventDefault(); break;
+        case 'n':
+        case 'N':
+          toggleNotes(); e.preventDefault(); break;
+      }
+    });
+
+    // click slide to advance (but not on buttons / notes)
+    stage.addEventListener('click', function(e) {
+      if (e.target.closest('button, .speaker-notes')) return;
+      // click right half = next, left half = prev
+      const rect = stage.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if (x > rect.width / 2) window.nextSlide();
+      else window.prevSlide();
+    });
+  })();
 </script>
 
 </body>
